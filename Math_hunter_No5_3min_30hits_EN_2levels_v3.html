@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Kru Pai Classroom · Hunt for 5 · Falling Grid Version</title>
+<style>
+  :root{
+    --bg:#fdfbff;
+    --panel:#ffffff;
+    --panel-soft:#fff6ff;
+    --ink:#342049;
+    --muted:#7b6c8c;
+    --accent:#ff6ad5;
+    --accent-soft:#ff9ff3;
+    --ok:#00b894;
+    --bad:#e84365;
+    --shadow:0 12px 30px rgba(0,0,0,.10);
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;
+    height:100%;
+    font-family:"Prompt",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+  }
+
+  header{
+    position:sticky;
+    top:0;
+    z-index:5;
+    background:linear-gradient(120deg,#ffe7f8,#fff7d9);
+    border-bottom:2px solid rgba(255,150,210,.7);
+    padding:10px 14px;
+    box-shadow:0 6px 20px rgba(0,0,0,.06);
+  }
+  .brand{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    font-weight:900;
+    letter-spacing:.4px;
+    font-size:clamp(17px,5vw,21px);
+  }
+  .brand span:first-child{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .brand-emoji{font-size:20px;}
+  .badge{
+    font-size:11px;
+    font-weight:900;
+    padding:4px 10px;
+    border-radius:999px;
+    background:#ffffff;
+    color:#ff3f9a;
+    border:1px solid rgba(255,150,210,.7);
+    box-shadow:0 0 0 2px rgba(255,255,255,.7);
+  }
+
+  main{
+    max-width:1200px;
+    margin:0 auto;
+    padding:16px;
+  }
+  .card{
+    background:var(--panel);
+    border-radius:22px;
+    border:1.5px solid #f4e6ff;
+    box-shadow:var(--shadow);
+    padding:18px;
+    margin:12px 0;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .card-dark{
+    background:#05040a;
+    border-color:#141326;
+  }
+  .card-dark .title{
+    color:#f9f5ff;
+  }
+  .card-dark .sub{
+    color:#dcd5ff;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:-40px;
+    background:
+      radial-gradient(circle at 0% 0%, rgba(255,214,255,.55), transparent 55%),
+      radial-gradient(circle at 100% 120%, rgba(196,224,255,.55), transparent 55%);
+    opacity:.45;
+    pointer-events:none;
+    z-index:-1;
+  }
+
+  .title{
+    font-size:clamp(22px,6vw,30px);
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .title-emoji{font-size:26px;}
+  .sub{color:var(--muted);font-size:16px;}
+
+  .row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    margin-top:10px;
+  }
+
+  .input{
+    flex:1;
+    min-width:180px;
+    border-radius:14px;
+    border:1.5px solid #e3d7ff;
+    padding:10px 12px;
+    background:#ffffff;
+    color:var(--ink);
+    font-weight:800;
+    outline:none;
+  }
+  .input::placeholder{color:#b9a9d4;}
+  .input:focus{
+    box-shadow:0 0 0 3px rgba(255,180,255,.7);
+    border-color:var(--accent);
+  }
+
+  .btn{
+    border:0;
+    border-radius:16px;
+    padding:12px 16px;
+    font-weight:900;
+    cursor:pointer;
+    min-width:160px;
+    font-size:15px;
+    box-shadow:0 10px 24px rgba(0,0,0,.12);
+    transition:transform .08s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  .btn:active{transform:translateY(1px);box-shadow:0 6px 16px rgba(0,0,0,.14);}
+  .btn.primary{
+    background:linear-gradient(120deg,#ff6ad5,#ffb960);
+    color:#3b1630;
+  }
+  .btn.alt{
+    background:#ffffff;
+    border:1.5px solid #e0d1ff;
+    color:var(--ink);
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:#ffffff;
+    border:1.5px solid #eedfff;
+    font-size:12px;
+    font-weight:800;
+    color:var(--muted);
+  }
+  .pill b{color:#ff5ba9;}
+  .pill-emoji{font-size:14px;}
+
+  .game-area{
+    margin-top:14px;
+    border-radius:20px;
+    border:1.5px solid #f4e4ff;
+    background:#fffdfd;
+    box-shadow:0 14px 30px rgba(0,0,0,.06);
+    padding:10px;
+  }
+
+  .mission{
+    font-size:14px;
+    font-weight:800;
+    color:#ff5ba9;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .mission .mission-emoji{font-size:18px;}
+
+  .playfield{
+    position:relative;
+    height:clamp(380px,60vh,520px);
+    max-height:65vh;
+    overflow:hidden;
+    border-radius:18px;
+    /* พื้นหลังโทนดำมีมิติ + เส้นกริดเบา ๆ */
+    background:
+      radial-gradient(circle at 0% 0%, rgba(120,170,255,.45), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(255,200,120,.28), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0, rgba(255,255,255,.08) 1px, transparent 1px, transparent 26px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 1px, transparent 1px, transparent 26px),
+      #050814;
+  }
+
+  .top-hint{
+    position:absolute;
+    top:8px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(255,255,255,.96);
+    border-radius:999px;
+    padding:4px 12px;
+    font-size:11px;
+    border:1px solid #ffd8f4;
+    color:var(--muted);
+    pointer-events:none;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .top-hint span{font-size:14px;}
+
+  .expr{
+    position:absolute;
+    top:-40px;
+    padding:10px 22px;
+    border-radius:999px;
+    font-size:clamp(20px,5vw,30px);
+    font-weight:900;
+    background:#e3f3ff;
+    color:var(--ink);
+    border:2.5px solid #82c3ff;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:0 8px 18px rgba(0,0,0,.10);
+    animation:fall linear forwards;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+  }
+
+  @keyframes fall{
+    from{transform:translateY(0);}
+    to{transform:translateY(120vh);}
+  }
+
+  .expr.hit{
+    background:linear-gradient(120deg,#fff8ff,#ffe9b4);
+    color:#3b132b;
+    border-color:#ffd86b;
+    box-shadow:0 0 18px rgba(255,210,130,.7);
+    animation:hitPop .45s ease-out forwards;
+  }
+  @keyframes hitPop{
+    0%{transform:scale(1) translateY(0);}
+    50%{transform:scale(1.15) translateY(-14px);}
+    100%{transform:scale(.9) translateY(22px);opacity:0;}
+  }
+
+  .expr.miss{
+    background:#ffe9f1;
+    border-color:#ffb0c0;
+    color:#c02040;
+    animation:missShake .4s ease-out forwards;
+  }
+  @keyframes missShake{
+    0%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    50%{transform:translateX(6px);}
+    75%{transform:translateX(-3px);}
+    100%{transform:translateX(0);opacity:.7;}
+  }
+
+  .glitter{
+    position:fixed;
+    pointer-events:none;
+    font-size:22px;
+    animation:glitterPop 900ms ease-out forwards;
+    filter:drop-shadow(0 0 5px rgba(255,210,255,.9));
+  }
+  @keyframes glitterPop{
+    0%{transform:translateY(0) scale(.9);opacity:1;}
+    100%{transform:translateY(-50px) scale(1.2);opacity:0;}
+  }
+
+  .footer-nav{
+    margin-top:14px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .footer-nav .btn{flex:1;}
+
+  .center{text-align:center;}
+  .big{
+    font-size:clamp(40px,12vw,72px);
+    font-weight:900;
+    color:#ffeb99;
+    text-shadow:0 0 18px rgba(255,230,150,.9);
+  }
+  .big-emoji{
+    font-size:34px;
+    display:block;
+    margin-bottom:4px;
+  }
+  #finalScore{
+    background:linear-gradient(90deg,#ffdf70,#ff9ff3);
+    -webkit-background-clip:text;
+    color:transparent;
+    text-shadow:0 0 18px rgba(255,200,160,.9);
+  }
+#finalScore{
+    display:block;
+    margin-top:4px;
+    letter-spacing:.06em;
+  }
+  .hidden{display:none!important;}
+
+  @media (min-width:1200px){
+    body{font-size:20px;}
+    .playfield{height:430px;}
+    .expr{
+      font-size:32px;
+      padding:12px 26px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span>
+      <span class="brand-emoji">➗</span>
+      Kru Pai Classroom · Hunt for 5
+    </span>
+    <span class="badge">Math Hunt for 5 · Falling Grid 🎯</span>
+  </div>
+</header>
+
+<main>
+    <!-- Intro title page -->
+  <section id="intro" class="card card-dark center">
+    <div class="title">
+      <span class="title-emoji">⚡</span>
+      Fast Math Hunter · <span style="white-space:nowrap;">HUNT FOR 5</span>
+    </div>
+    <p class="sub">
+      Quick-fire number sense game for kids and classrooms. 💡<br>
+      Train students to spot which expressions really equal <b>5</b> — under time pressure!<br><br>
+      Perfect for<br>
+      • warm-up brain breaks 🧠<br>
+      • math centres & fast-finishers 🎯<br>
+      • TV / projector challenges in class 📺
+    </p>
+    <div class="row" style="margin-top:16px;justify-content:center;">
+      <button id="btnGoStart" class="btn primary">Next · How to Play ▶</button>
+    </div>
+  </section>
+
+<!-- หน้าเริ่มเกม -->
+  <section id="start" class="card card-dark hidden">
+    <div class="title">
+      <span class="title-emoji">🎲</span>
+      Hunt for 5 · Speed Mission
+    </div>
+    <p class="sub">
+      Fast mental math game: <b>Tap only the expressions that equal 5</b> 💥<br><br>
+      How to play:<br>
+      • Correct examples: <b>10 − 5, 2 + 3, 25 ÷ 5, 1 × 5</b><br>
+      • Not 5: <b>2 + 2, 9 − 2, 15 ÷ 3, 3 + 6</b><br><br>
+      Scoring:<br>
+      • Tap correct (answer = 5) ➜ <b>+1 point</b><br>
+      • Tap wrong ➜ <b>−1 point</b><br>
+      • Let a 5 fall without tapping ➜ it counts as a miss 😆<br><br>
+      You have <b>180 seconds</b>. Boxes keep falling on the grid – try to catch all <b>30</b> “5” expressions! 💗➕
+    </p>
+    <div class="row">
+      <input id="playerName" class="input" placeholder="Type player name, e.g. Beam, New, Mint 🧑‍🎓">
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnStart" class="btn primary">Start the Hunt! ▶</button>
+    </div>
+  </section>
+
+
+<!-- หน้าเกม -->
+  <section id="game" class="card hidden">
+    <div class="row">
+      <span class="pill"><span class="pill-emoji">👧</span>Player: <b id="displayName">-</b></span>
+      <span class="pill"><span class="pill-emoji">⏱️</span>Time: <b id="time">180</b>s</span>
+      <span class="pill"><span class="pill-emoji">⭐</span>Score: <b id="score">0</b></span>
+      <span class="pill"><span class="pill-emoji">✅</span>Correct hits: <b id="hits">0</b></span>
+      <span class="pill"><span class="pill-emoji">❌</span>Misses: <b id="misses">0</b></span>
+    </div>
+
+    <div class="game-area">
+      <div class="mission">
+        <span class="mission-emoji">🧮</span>
+        Mission: Tap only expressions whose answer is <b>5</b>. Try to find all <b>30</b> within 180 seconds!
+      </div>
+      <div class="playfield" id="playfield">
+        <div class="top-hint">
+          <span>👆</span>
+          Think before you tap: choose only the expressions that equal 5.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-nav">
+      <button id="btnGiveUp" class="btn alt">End Game & Show Summary 📝</button>
+    </div>
+  </section>
+
+
+<!-- หน้าสรุป -->
+  <section id="summary" class="card card-dark hidden center">
+    <div class="title">
+      <span class="title-emoji">🏁</span>
+      Hunt for 5 · Game Summary
+    </div>
+    <div class="big">
+      <span class="big-emoji" id="emojiScore">🎉</span>
+      <span id="finalScore">0 points</span>
+    </div>
+    <p class="sub" id="detailScore"></p>
+    <p class="sub" id="commentText"></p>
+    <div class="footer-nav">
+      <button id="btnReplay" class="btn primary">Play Again 🔁</button>
+      <button id="btnLevel2" class="btn primary" style="display:none;">Level 2 · Hard Mode 🔥</button>
+      <button id="btnBackHome" class="btn alt">Back to Start 🏡</button>
+    </div>
+  </section>
+</main>
+
+<script>
+/* 🔊 Simple SFX */
+let audioCtx;
+function beep(freq=760, dur=0.08, type="sine", gain=0.04){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    setTimeout(()=>{o.stop(); o.disconnect(); g.disconnect();}, dur*1000);
+  }catch(e){}
+}
+function okSound(){ beep(1040,0.07,"triangle",0.055); setTimeout(()=>beep(1500,0.09,"triangle",0.05),90); }
+function badSound(){ beep(220,0.16,"sawtooth",0.07); }
+
+/* 🎯 ชุดโจทย์คละ ๆ (จริง ๆ เกมจะสุ่มวนไปเรื่อย ๆ) */
+const EXPRESSIONS_L1 = [
+  // answer = 5
+  { text:"10 − 5", value:5 },
+  { text:"2 + 3", value:5 },
+  { text:"3 + 2", value:5 },
+  { text:"4 + 1", value:5 },
+  { text:"1 + 4", value:5 },
+  { text:"25 ÷ 5", value:5 },
+  { text:"20 ÷ 4", value:5 },
+  { text:"15 ÷ 3", value:5 },
+  { text:"35 ÷ 7", value:5 },
+  { text:"40 ÷ 8", value:5 },
+  { text:"45 ÷ 9", value:5 },
+  { text:"50 ÷ 10", value:5 },
+  { text:"60 ÷ 12", value:5 },
+  { text:"9 − 4", value:5 },
+  { text:"11 − 6", value:5 },
+  { text:"13 − 8", value:5 },
+  { text:"15 − 10", value:5 },
+  { text:"18 − 13", value:5 },
+  { text:"22 − 17", value:5 },
+  { text:"27 − 22", value:5 },
+  { text:"32 − 27", value:5 },
+  { text:"100 ÷ 20", value:5 },
+  { text:"70 ÷ 14", value:5 },
+  { text:"55 ÷ 11", value:5 },
+  { text:"5 × 1", value:5 },
+  { text:"1 × 5", value:5 },
+  { text:"5 + 0", value:5 },
+  { text:"0 + 5", value:5 },
+  { text:"6 − 1", value:5 },
+  { text:"8 − 3", value:5 },
+
+  // not 5 (decoys)
+  { text:"2 + 2", value:4 },
+  { text:"3 + 4", value:7 },
+  { text:"9 − 2", value:7 },
+  { text:"18 ÷ 3", value:6 },
+  { text:"12 ÷ 4", value:3 },
+  { text:"3 + 3", value:6 },
+  { text:"7 − 1", value:6 },
+  { text:"21 ÷ 7", value:3 },
+  { text:"16 − 9", value:7 },
+  { text:"8 + 8", value:16 },
+  { text:"4 × 4", value:16 },
+  { text:"6 × 2", value:12 },
+  { text:"9 + 1", value:10 },
+  { text:"10 − 2", value:8 },
+  { text:"14 − 4", value:10 },
+  { text:"3 × 3", value:9 },
+  { text:"12 ÷ 2", value:6 },
+  { text:"5 + 7", value:12 },
+  { text:"20 ÷ 2", value:10 },
+  { text:"30 ÷ 3", value:10 },
+  { text:"8 − 1", value:7 },
+  { text:"11 − 4", value:7 },
+  { text:"9 − 1", value:8 },
+  { text:"25 ÷ 4", value:6.25 },
+  { text:"18 − 12", value:6 },
+  { text:"5 × 2", value:10 },
+  { text:"4 + 4", value:8 },
+  { text:"14 ÷ 2", value:7 },
+  { text:"24 ÷ 8", value:3 }
+];
+
+const EXPRESSIONS_L2 = [
+  // Level 2: three-term expressions, answer = 5
+  { text:"2 + 8 − 5", value:5 },
+  { text:"5 × 4 − 15", value:5 },
+  { text:"3 × 3 − 4", value:5 },
+  { text:"12 − 7 + 0", value:5 },
+  { text:"9 + 1 − 5", value:5 },
+  { text:"2 × 5 − 5", value:5 },
+  { text:"1 + 9 − 5", value:5 },
+  { text:"7 + 3 − 5", value:5 },
+  { text:"6 + 4 − 5", value:5 },
+  { text:"4 × 3 − 7", value:5 },
+  { text:"16 − 6 − 5", value:5 },
+  { text:"20 − 3 × 5", value:5 },
+  { text:"18 − 8 − 5", value:5 },
+  { text:"6 × 2 − 7", value:5 },
+  { text:"15 − 5 − 5", value:5 },
+  { text:"11 − 1 − 5", value:5 },
+  { text:"14 − 4 − 5", value:5 },
+  { text:"21 − 11 − 5", value:5 },
+  { text:"3 + 7 − 5", value:5 },
+  { text:"13 − 3 − 5", value:5 },
+  { text:"19 − 9 − 5", value:5 },
+  { text:"10 + 5 − 10", value:5 },
+  { text:"8 + 7 − 10", value:5 },
+  { text:"4 × 5 − 15", value:5 },
+  { text:"5 × 3 − 10", value:5 },
+  { text:"3 × 4 − 7", value:5 },
+  { text:"2 × 6 − 7", value:5 },
+  { text:"7 × 2 − 9", value:5 },
+  { text:"9 + 9 − 13", value:5 },
+
+  // not 5 (decoys)
+  { text:"2 + 8 − 3", value:7 },
+  { text:"5 × 4 − 10", value:10 },
+  { text:"3 × 3 − 2", value:7 },
+  { text:"12 − 4 + 0", value:8 },
+  { text:"9 + 2 − 5", value:6 },
+  { text:"2 × 5 − 3", value:7 },
+  { text:"1 + 9 − 3", value:7 },
+  { text:"7 + 3 − 2", value:8 },
+  { text:"6 + 4 − 4", value:6 },
+  { text:"4 × 3 − 5", value:7 },
+  { text:"16 − 4 − 5", value:7 },
+  { text:"18 − 6 − 5", value:7 },
+  { text:"6 × 2 − 5", value:7 },
+  { text:"15 − 3 − 5", value:7 },
+  { text:"11 − 2 − 5", value:4 },
+  { text:"14 − 3 − 5", value:6 },
+  { text:"21 − 9 − 5", value:7 },
+  { text:"3 + 7 − 3", value:7 },
+  { text:"13 − 2 − 5", value:6 },
+  { text:"19 − 8 − 5", value:6 },
+  { text:"10 + 5 − 9", value:6 },
+  { text:"8 + 7 − 8", value:7 },
+  { text:"4 × 5 − 10", value:10 },
+  { text:"5 × 3 − 6", value:9 },
+  { text:"3 × 4 − 4", value:8 },
+  { text:"2 × 6 − 5", value:7 },
+  { text:"7 × 2 − 5", value:9 },
+  { text:"9 + 9 − 10", value:8 }
+];
+/* ค่าพื้นฐาน */
+const GAME_TIME = 180;       // วินาทีทั้งหมด
+const SPAWN_INTERVAL = 1100; // ออกโจทย์ใหม่ทุกกี่ ms (เร็วแบบกดมัน ๆ)
+const MIN_DUR = 8;          // เวลาตกขั้นต่ำ (ช้าเหมือนเกมคำศัพท์)
+const EXTRA_DUR = 3.5;      // ระยะเพิ่มสุ่ม
+
+const TARGET_HITS = 30;      // จำนวนข้อที่คำตอบ = 5 ที่ต้องการให้หาให้ครบ
+const PASS_RATIO = 0.8;      // ต้องถูกอย่างน้อย 80% เพื่อปลดล็อก Level 2
+
+let currentLevel = 1;        // 1 = ง่าย, 2 = ยาก
+let EXPRESSIONS = EXPRESSIONS_L1; // จะสลับตาม level ที่เล่น
+
+let timeLeft = GAME_TIME;
+let timerId = null;
+let spawnId = null;
+let running = false;
+let score = 0;
+let hits = 0;
+let misses = 0;
+let usedTime = 0;
+
+const $ = id => document.getElementById(id);
+const E = {
+  intro: $("intro"),
+  start: $("start"),
+  game: $("game"),
+  summary: $("summary"),
+  playfield: $("playfield"),
+  nameInput: $("playerName"),
+  displayName: $("displayName"),
+  btnGoStart: $("btnGoStart"),
+  btnStart: $("btnStart"),
+  btnGiveUp: $("btnGiveUp"),
+  btnReplay: $("btnReplay"),
+  btnLevel2: $("btnLevel2"),
+  btnBackHome: $("btnBackHome"),
+  time: $("time"),
+  score: $("score"),
+  hits: $("hits"),
+  misses: $("misses"),
+  finalScore: $("finalScore"),
+  emojiScore: $("emojiScore"),
+  detailScore: $("detailScore"),
+  commentText: $("commentText")
+};
+
+function formatScore(n){
+  return (n % 1 === 0) ? n.toString() : n.toFixed(1);
+}
+
+function glitter(x,y,good=true){
+  const g = document.createElement("div");
+  g.className = "glitter";
+  g.textContent = good ? "✨" : "💥";
+  g.style.left = (x-10) + "px";
+  g.style.top = (y-10) + "px";
+  document.body.appendChild(g);
+  setTimeout(()=>g.remove(), 900);
+}
+
+function megaConfetti(){
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  for(let i=0;i<40;i++){
+    const x = Math.random()*w;
+    const y = Math.random()*h*0.7;
+    glitter(x,y,true);
+  }
+}
+
+/* ล้างสนาม + ใส่ Hint */
+function clearField(){
+  while(E.playfield.firstChild){
+    E.playfield.removeChild(E.playfield.firstChild);
+  }
+  const hint = document.createElement("div");
+  hint.className = "top-hint";
+  hint.innerHTML = "<span>👆</span>Tip: Tap only when you are sure the expression equals 5.";
+  E.playfield.appendChild(hint);
+}
+
+/* เริ่มเกม */
+function startGame(){
+  // เลือกชุดโจทย์ตามเลเวลปัจจุบัน
+  EXPRESSIONS = (currentLevel === 1 ? EXPRESSIONS_L1 : EXPRESSIONS_L2);
+
+  const name = (E.nameInput.value || "Player").trim().slice(0,24);
+  E.displayName.textContent = name || "Player";
+
+  score = 0; hits = 0; misses = 0;
+  timeLeft = GAME_TIME;
+  E.time.textContent = timeLeft;
+  E.score.textContent = formatScore(score);
+  E.hits.textContent = hits;
+  E.misses.textContent = misses;
+
+  clearField();
+
+  E.start.classList.add("hidden");
+  E.summary.classList.add("hidden");
+  E.game.classList.remove("hidden");
+
+  running = true;
+  startTimer();
+  startSpawning();
+}
+
+
+/* ตัวจับเวลา */
+/* ตัวจับเวลา */
+function startTimer(){
+  if(timerId) clearInterval(timerId);
+  timerId = setInterval(()=>{
+    timeLeft--;
+    if(timeLeft < 0) timeLeft = 0;
+    E.time.textContent = timeLeft;
+    if(timeLeft <= 0){
+      endGame();
+    }
+  },1000);
+}
+
+/* สุ่มโจทย์ร่วง */
+function startSpawning(){
+  if(spawnId) clearInterval(spawnId);
+  spawnId = setInterval(()=>{
+    if(!running) return;
+    spawnExpression();
+  }, SPAWN_INTERVAL);
+}
+
+function spawnExpression(){
+  const w = EXPRESSIONS[Math.floor(Math.random()*EXPRESSIONS.length)];
+  const exprEl = document.createElement("div");
+  exprEl.className = "expr";
+  exprEl.textContent = w.text;
+  exprEl.dataset.value = w.value;
+
+  const pfRect = E.playfield.getBoundingClientRect();
+  const maxWidth = pfRect.width || window.innerWidth;
+  const left = 12 + Math.random() * (maxWidth - 160);
+  exprEl.style.left = left + "px";
+
+  const duration = MIN_DUR + Math.random()*EXTRA_DUR;
+  exprEl.style.animationDuration = duration + "s";
+
+  exprEl.addEventListener("animationend", ()=>{
+    if(!running){
+      exprEl.remove();
+      return;
+    }
+    const v = Number(exprEl.dataset.value);
+    // ถ้าเป็นข้อที่คำตอบ = 5 แต่เด็กไม่ได้กด -> นับเป็นพลาด
+    if(v === 5 && !exprEl.classList.contains("hit")){
+      misses += 1;
+      E.misses.textContent = misses;
+    }
+    exprEl.remove();
+  });
+
+  E.playfield.appendChild(exprEl);
+}
+
+/* คลิกโจทย์ */
+E.playfield.addEventListener("click", ev=>{
+  if(!running) return;
+  const exprEl = ev.target.closest(".expr");
+  if(!exprEl) return;
+  if(exprEl.classList.contains("hit") || exprEl.classList.contains("miss")) return;
+
+  const v = Number(exprEl.dataset.value);
+  if(v === 5){
+    // กดถูก
+    score += 1;
+    hits += 1;
+    E.score.textContent = formatScore(score);
+    E.hits.textContent = hits;
+    exprEl.classList.add("hit");
+    okSound();
+    glitter(ev.clientX, ev.clientY, true);
+    setTimeout(()=>exprEl.remove(), 450);
+    // ถ้าเก็บครบตามจำนวนที่ตั้งไว้ ให้จบเกมทันที
+    if(hits >= TARGET_HITS){
+      endGame();
+      return;
+    }
+  }else{
+    // กดผิด
+    score -= 1;
+    misses += 1;
+    E.score.textContent = formatScore(score);
+    E.misses.textContent = misses;
+    exprEl.classList.add("miss");
+    badSound();
+    glitter(ev.clientX, ev.clientY, false);
+    setTimeout(()=>exprEl.remove(), 420);
+  }
+});
+
+/* จบเกม */
+function endGame(){
+  if(!running) return;
+  running = false;
+  if(timerId) clearInterval(timerId);
+  if(spawnId) clearInterval(spawnId);
+  timerId = null;
+  spawnId = null;
+
+  // คำนวณเวลาที่ใช้จริง (GAME_TIME - เวลาที่เหลือ)
+  usedTime = GAME_TIME - timeLeft;
+  if(usedTime < 0) usedTime = 0;
+
+  const items = E.playfield.querySelectorAll(".expr");
+  items.forEach(el=>{
+    el.style.pointerEvents = "none";
+    el.style.opacity = "0.2";
+  });
+
+  setTimeout(showSummary, 600);
+}
+
+function showSummary(){
+  E.game.classList.add("hidden");
+  E.summary.classList.remove("hidden");
+
+  E.finalScore.textContent = formatScore(score) + " points";
+
+  // Show 4 key stats: correct / misses / score / time used
+  E.detailScore.innerHTML =
+    `Correct hits (answer = 5): <b>${hits}</b> / target <b>${TARGET_HITS}</b><br>` +
+    `Misses or missed 5s: <b>${misses}</b><br>` +
+    `Final score: <b>${formatScore(score)}</b> points<br>` +
+    `Time used: <b>${usedTime}</b> seconds (of ${GAME_TIME} seconds)`;
+
+  let comment = "";
+  let emoji = "🎉";
+
+  // ข้อความให้กำลังใจ/ยศ ตามผลงาน
+  if(hits >= TARGET_HITS && score >= TARGET_HITS - 2){
+    comment = "Legendary! Perfect or near-perfect hunt. This player is a true number ninja. 🏆";
+    emoji = "🏆";
+  }else if(hits >= Math.round(TARGET_HITS*0.85)){
+    comment = "Amazing! Lightning-fast number sense. Try again and go for a perfect run. ✨";
+    emoji = "⭐";
+  }else if(hits >= Math.round(TARGET_HITS*0.7)){
+    comment = "Great job! You can spot 5 very quickly. Play again and try to beat your best time. 💪";
+    emoji = "💪";
+  }else if(score < 0){
+    comment = "Nice speed, but a bit too many guesses. Slow down a little and check each expression before you tap. 🌱";
+    emoji = "🌱";
+  }else{
+    comment = "Good warm-up round! Review how each expression becomes 5, then play again to see big improvement. 💖";
+    emoji = "😊";
+  }
+
+  E.commentText.textContent = comment;
+  E.emojiScore.textContent = emoji;
+
+  // จัดการปุ่ม Level 2: ปลดล็อกเมื่อ Level 1 ได้อย่างน้อย 80% ของ TARGET_HITS
+  const needed = Math.round(TARGET_HITS * PASS_RATIO);
+  if(currentLevel === 1 && hits >= needed){
+    E.btnLevel2.style.display = "inline-block";
+    // celebrate with big confetti when player unlocks Level 2
+    megaConfetti();
+  }else{
+    E.btnLevel2.style.display = "none";
+  }
+}
+
+
+/* ปุ่มควบคุม */
+E.btnGoStart.addEventListener("click", ()=>{
+  // from title page to how-to-play page
+  E.intro.classList.add("hidden");
+  E.start.classList.remove("hidden");
+});
+
+E.btnStart.addEventListener("click", ()=>{
+  currentLevel = 1;
+  startGame();
+});
+E.nameInput.addEventListener("keydown", e=>{
+  if(e.key === "Enter"){
+    currentLevel = 1;
+    startGame();
+  }
+});
+E.btnGiveUp.addEventListener("click", endGame);
+E.btnReplay.addEventListener("click", ()=>{
+  E.summary.classList.add("hidden");
+  // เล่นซ้ำเลเวลเดิม
+  startGame();
+});
+E.btnLevel2.addEventListener("click", ()=>{
+  // ไปเล่น Level 2
+  currentLevel = 2;
+  E.summary.classList.add("hidden");
+  startGame();
+});
+E.btnBackHome.addEventListener("click", ()=>{
+  // กลับไปหน้า intro แรก
+  E.summary.classList.add("hidden");
+  E.game.classList.add("hidden");
+  E.start.classList.add("hidden");
+  E.intro.classList.remove("hidden");
+});
+
+</script>
+</bo
